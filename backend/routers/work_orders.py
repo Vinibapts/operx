@@ -4,6 +4,8 @@ from database import get_db
 from models.work_order import WorkOrder
 from pydantic import BaseModel
 from typing import Optional
+import asyncio
+from services.email_service import send_alert_email
 
 router = APIRouter(
     prefix="/work-orders",
@@ -40,6 +42,19 @@ def create_work_order(request: WorkOrderRequest, db: Session = Depends(get_db)):
     db.add(work_order)
     db.commit()
     db.refresh(work_order)
+
+    # Dispara email de alerta
+    asyncio.run(send_alert_email(
+        subject="🔧 Nova Ordem de Serviço criada - Operx",
+        body=f"""
+        <h2>Nova Ordem de Serviço</h2>
+        <p><b>ID:</b> {work_order.id}</p>
+        <p><b>Máquina ID:</b> {work_order.machine_id}</p>
+        <p><b>Descrição:</b> {work_order.description or 'Sem descrição'}</p>
+        <p><b>Status:</b> {work_order.status}</p>
+        """
+    ))
+
     return work_order
 
 @router.patch("/{work_order_id}/status")

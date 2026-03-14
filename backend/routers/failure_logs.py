@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from models.failure_log import FailureLog
+import asyncio
+from services.email_service import send_alert_email
 
 router = APIRouter(
     prefix="/failure-logs",
@@ -42,4 +44,18 @@ def create_failure_log(
     db.add(log)
     db.commit()
     db.refresh(log)
+
+    # Dispara email de alerta
+    asyncio.run(send_alert_email(
+        subject="⚠️ Falha registrada em máquina - Operx",
+        body=f"""
+        <h2>⚠️ Falha Registrada</h2>
+        <p><b>ID do Log:</b> {log.id}</p>
+        <p><b>Máquina ID:</b> {log.machine_id}</p>
+        <p><b>Descrição:</b> {log.description or 'Sem descrição'}</p>
+        <p><b>Tempo parado:</b> {log.downtime_hours or 0} horas</p>
+        <p><b>Custo estimado:</b> R$ {log.estimated_cost or 0:.2f}</p>
+        """
+    ))
+
     return log

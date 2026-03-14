@@ -4,6 +4,8 @@ from database import get_db
 from models.maintenance_plan import MaintenancePlan
 from pydantic import BaseModel
 from typing import Optional
+import asyncio
+from services.email_service import send_alert_email
 
 router = APIRouter(
     prefix="/maintenance-plans",
@@ -41,6 +43,20 @@ def create_maintenance_plan(request: MaintenancePlanRequest, db: Session = Depen
     db.add(plan)
     db.commit()
     db.refresh(plan)
+
+    # Dispara email de alerta
+    asyncio.run(send_alert_email(
+        subject="📅 Novo Plano de Manutenção criado - Operx",
+        body=f"""
+        <h2>📅 Novo Plano de Manutenção</h2>
+        <p><b>ID:</b> {plan.id}</p>
+        <p><b>Máquina ID:</b> {plan.machine_id}</p>
+        <p><b>Tipo:</b> {plan.type}</p>
+        <p><b>Descrição:</b> {plan.description or 'Sem descrição'}</p>
+        <p><b>Frequência:</b> A cada {plan.frequency_days} dias</p>
+        """
+    ))
+
     return plan
 
 @router.patch("/{plan_id}/status")
