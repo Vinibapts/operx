@@ -4,6 +4,12 @@ import { useState, useEffect } from 'react'
 import Sidebar from '../components/sidebar'
 import ProtectedRoute from '../components/protected-route'
 
+function authHeaders(): Record<string, string> {
+  if (typeof window === 'undefined') return {}
+  const token = localStorage.getItem('token')
+  return token ? { 'Authorization': `Bearer ${token}` } : {}
+}
+
 export default function FailureLogsPage() {
   const [logs, setLogs] = useState([])
   const [machines, setMachines] = useState([])
@@ -19,8 +25,8 @@ export default function FailureLogsPage() {
 
   function loadData() {
     Promise.all([
-      fetch('http://127.0.0.1:8000/failure-logs/').then(res => res.json()),
-      fetch('http://127.0.0.1:8000/machines/').then(res => res.json()),
+      fetch('http://127.0.0.1:8000/failure-logs/', { headers: authHeaders() }).then(res => res.json()),
+      fetch('http://127.0.0.1:8000/machines/', { headers: authHeaders() }).then(res => res.json()),
     ]).then(([logsData, machinesData]) => {
       setLogs(logsData)
       setMachines(machinesData)
@@ -46,6 +52,7 @@ export default function FailureLogsPage() {
 
       const response = await fetch(`http://127.0.0.1:8000/failure-logs/?${params}`, {
         method: 'POST',
+        headers: authHeaders()
       })
 
       if (response.ok) {
@@ -65,24 +72,18 @@ export default function FailureLogsPage() {
   return (
     <ProtectedRoute>
       <div className="flex min-h-screen bg-gray-50">
-
         <Sidebar />
-
         <main className="flex-1 px-8 py-8">
-
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-2xl font-bold text-gray-800">Registro de Falhas</h1>
               <p className="text-gray-500">Histórico de problemas e falhas das máquinas</p>
             </div>
-            <button
-              onClick={() => setShowModal(true)}
-              className="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"
-            >
+            <button onClick={() => setShowModal(true)}
+              className="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
               + Registrar Falha
             </button>
           </div>
-
           <div className="bg-white rounded-2xl shadow-sm p-6">
             {loading ? (
               <p className="text-gray-400 text-sm">Carregando falhas...</p>
@@ -119,7 +120,6 @@ export default function FailureLogsPage() {
             )}
           </div>
         </main>
-
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
