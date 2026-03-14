@@ -8,6 +8,7 @@ const menuItems = [
   { label: 'Máquinas', href: '/machines', icon: '⚙️' },
   { label: 'Ordens de Serviço', href: '/work-orders', icon: '🔧' },
   { label: 'Planos de Manutenção', href: '/maintenance-plans', icon: '📋' },
+  { label: 'Registro de Falhas', href: '/failure-logs', icon: '⚠️' },
   { label: 'Relatórios', href: '/reports', icon: '📈' },
   { label: 'Configurações', href: '/settings', icon: '⚙️' },
 ]
