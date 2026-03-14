@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Sidebar from '../components/sidebar'
+import ProtectedRoute from '../components/protected-route'
 
 export default function DashboardPage() {
   const [machines, setMachines] = useState([])
@@ -25,6 +26,7 @@ export default function DashboardPage() {
   const criticalMachines = machines.filter((m: any) => m.status === 'maintenance').length
 
   return (
+    <ProtectedRoute>
     <div className="flex min-h-screen bg-gray-50">
 
       <Sidebar />
@@ -103,5 +105,6 @@ export default function DashboardPage() {
 
       </main>
     </div>
+   </ProtectedRoute>
   )
 }
