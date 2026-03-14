@@ -4,6 +4,11 @@ import { useState, useEffect } from 'react'
 import Sidebar from '../components/sidebar'
 import ProtectedRoute from '../components/protected-route'
 
+function authHeaders() {
+  const token = localStorage.getItem('token')
+  return { 'Authorization': `Bearer ${token}` }
+}
+
 export default function WorkOrdersPage() {
   const [workOrders, setWorkOrders] = useState([])
   const [machines, setMachines] = useState([])
@@ -17,8 +22,8 @@ export default function WorkOrdersPage() {
 
   function loadData() {
     Promise.all([
-      fetch('http://127.0.0.1:8000/work-orders/').then(res => res.json()),
-      fetch('http://127.0.0.1:8000/machines/').then(res => res.json()),
+      fetch('http://127.0.0.1:8000/work-orders/', { headers: authHeaders() }).then(res => res.json()),
+      fetch('http://127.0.0.1:8000/machines/', { headers: authHeaders() }).then(res => res.json()),
     ]).then(([ordersData, machinesData]) => {
       setWorkOrders(ordersData)
       setMachines(machinesData)
@@ -37,7 +42,7 @@ export default function WorkOrdersPage() {
     try {
       const response = await fetch('http://127.0.0.1:8000/work-orders/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           machine_id: parseInt(form.machine_id),
           description: form.description

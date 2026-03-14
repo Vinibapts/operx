@@ -2,11 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from models.work_order import WorkOrder
+from models.user import User
 from pydantic import BaseModel
 from typing import Optional
 import asyncio
 from services.email_service import send_alert_email
 from services.whatsapp_service import send_whatsapp_alert
+from auth_middleware import get_current_user
 
 router = APIRouter(
     prefix="/work-orders",
@@ -20,19 +22,19 @@ class WorkOrderRequest(BaseModel):
     technician_id: Optional[int] = None
 
 @router.get("/")
-def get_work_orders(db: Session = Depends(get_db)):
+def get_work_orders(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     work_orders = db.query(WorkOrder).all()
     return work_orders
 
 @router.get("/{work_order_id}")
-def get_work_order(work_order_id: int, db: Session = Depends(get_db)):
+def get_work_order(work_order_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     work_order = db.query(WorkOrder).filter(WorkOrder.id == work_order_id).first()
     if not work_order:
         raise HTTPException(status_code=404, detail="Ordem de serviço não encontrada")
     return work_order
 
 @router.post("/")
-def create_work_order(request: WorkOrderRequest, db: Session = Depends(get_db)):
+def create_work_order(request: WorkOrderRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     work_order = WorkOrder(
         machine_id=request.machine_id,
         description=request.description,
@@ -62,7 +64,7 @@ def create_work_order(request: WorkOrderRequest, db: Session = Depends(get_db)):
     return work_order
 
 @router.patch("/{work_order_id}/status")
-def update_work_order_status(work_order_id: int, status: str, db: Session = Depends(get_db)):
+def update_work_order_status(work_order_id: int, status: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     work_order = db.query(WorkOrder).filter(WorkOrder.id == work_order_id).first()
     if not work_order:
         raise HTTPException(status_code=404, detail="Ordem de serviço não encontrada")

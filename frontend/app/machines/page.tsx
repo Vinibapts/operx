@@ -4,6 +4,11 @@ import { useState, useEffect } from 'react'
 import Sidebar from '../components/sidebar'
 import ProtectedRoute from '../components/protected-route'
 
+function authHeaders() {
+  const token = localStorage.getItem('token')
+  return { 'Authorization': `Bearer ${token}` }
+}
+
 export default function MachinesPage() {
   const [machines, setMachines] = useState([])
   const [loading, setLoading] = useState(true)
@@ -18,7 +23,7 @@ export default function MachinesPage() {
   })
 
   function loadMachines() {
-    fetch('http://127.0.0.1:8000/machines/')
+    fetch('http://127.0.0.1:8000/machines/', { headers: authHeaders() })
       .then(res => res.json())
       .then(data => {
         setMachines(data)
@@ -38,7 +43,7 @@ export default function MachinesPage() {
     try {
       const response = await fetch('http://127.0.0.1:8000/machines/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           company_id: 1,
           name: form.name,

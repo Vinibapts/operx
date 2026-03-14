@@ -4,6 +4,11 @@ import { useState, useEffect } from 'react'
 import Sidebar from '../components/sidebar'
 import ProtectedRoute from '../components/protected-route'
 
+function authHeaders() {
+  const token = localStorage.getItem('token')
+  return { 'Authorization': `Bearer ${token}` }
+}
+
 export default function DashboardPage() {
   const [machines, setMachines] = useState([])
   const [workOrders, setWorkOrders] = useState([])
@@ -11,8 +16,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch('http://127.0.0.1:8000/machines/').then(res => res.json()),
-      fetch('http://127.0.0.1:8000/work-orders/').then(res => res.json()),
+      fetch('http://127.0.0.1:8000/machines/', { headers: authHeaders() }).then(res => res.json()),
+      fetch('http://127.0.0.1:8000/work-orders/', { headers: authHeaders() }).then(res => res.json()),
     ]).then(([machinesData, workOrdersData]) => {
       setMachines(machinesData)
       setWorkOrders(workOrdersData)
@@ -36,7 +41,6 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-bold text-gray-800 mb-2">Dashboard</h1>
         <p className="text-gray-500 mb-8">Visão geral da sua operação</p>
 
-        {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-2xl shadow-sm p-6 border-l-4 border-blue-500">
             <p className="text-sm text-gray-500">Total de Máquinas</p>
@@ -56,7 +60,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Tabela OS recentes */}
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Ordens de Serviço Recentes</h2>
           {loading ? (

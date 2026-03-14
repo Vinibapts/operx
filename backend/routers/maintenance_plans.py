@@ -2,11 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from models.maintenance_plan import MaintenancePlan
+from models.user import User
 from pydantic import BaseModel
 from typing import Optional
 import asyncio
 from services.email_service import send_alert_email
 from services.whatsapp_service import send_whatsapp_alert
+from auth_middleware import get_current_user
 
 router = APIRouter(
     prefix="/maintenance-plans",
@@ -21,19 +23,19 @@ class MaintenancePlanRequest(BaseModel):
     responsible_id: Optional[int] = None
 
 @router.get("/")
-def get_maintenance_plans(db: Session = Depends(get_db)):
+def get_maintenance_plans(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     plans = db.query(MaintenancePlan).all()
     return plans
 
 @router.get("/{plan_id}")
-def get_maintenance_plan(plan_id: int, db: Session = Depends(get_db)):
+def get_maintenance_plan(plan_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     plan = db.query(MaintenancePlan).filter(MaintenancePlan.id == plan_id).first()
     if not plan:
         raise HTTPException(status_code=404, detail="Plano não encontrado")
     return plan
 
 @router.post("/")
-def create_maintenance_plan(request: MaintenancePlanRequest, db: Session = Depends(get_db)):
+def create_maintenance_plan(request: MaintenancePlanRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     plan = MaintenancePlan(
         machine_id=request.machine_id,
         type=request.type,
@@ -64,7 +66,7 @@ def create_maintenance_plan(request: MaintenancePlanRequest, db: Session = Depen
     return plan
 
 @router.patch("/{plan_id}/status")
-def update_plan_status(plan_id: int, active: bool, db: Session = Depends(get_db)):
+def update_plan_status(plan_id: int, active: bool, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     plan = db.query(MaintenancePlan).filter(MaintenancePlan.id == plan_id).first()
     if not plan:
         raise HTTPException(status_code=404, detail="Plano não encontrado")

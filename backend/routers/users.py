@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.user import User
 import hashlib
+from auth_middleware import get_current_user
 
 router = APIRouter(
     prefix="/users",
@@ -13,12 +14,12 @@ def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
 @router.get("/")
-def get_users(db: Session = Depends(get_db)):
+def get_users(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     users = db.query(User).all()
     return users
 
 @router.get("/{user_id}")
-def get_user(user_id: int, db: Session = Depends(get_db)):
+def get_user(user_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
@@ -31,7 +32,8 @@ def create_user(
     email: str,
     password: str,
     role: str = "technician",
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     existing = db.query(User).filter(User.email == email).first()
     if existing:
@@ -50,7 +52,7 @@ def create_user(
     return user
 
 @router.patch("/{user_id}/status")
-def update_user_status(user_id: int, active: bool, db: Session = Depends(get_db)):
+def update_user_status(user_id: int, active: bool, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")

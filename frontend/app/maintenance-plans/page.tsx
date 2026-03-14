@@ -4,6 +4,11 @@ import { useState, useEffect } from 'react'
 import Sidebar from '../components/sidebar'
 import ProtectedRoute from '../components/protected-route'
 
+function authHeaders() {
+  const token = localStorage.getItem('token')
+  return { 'Authorization': `Bearer ${token}` }
+}
+
 export default function MaintenancePlansPage() {
   const [plans, setPlans] = useState([])
   const [machines, setMachines] = useState([])
@@ -19,8 +24,8 @@ export default function MaintenancePlansPage() {
 
   function loadData() {
     Promise.all([
-      fetch('http://127.0.0.1:8000/maintenance-plans/').then(res => res.json()),
-      fetch('http://127.0.0.1:8000/machines/').then(res => res.json()),
+      fetch('http://127.0.0.1:8000/maintenance-plans/', { headers: authHeaders() }).then(res => res.json()),
+      fetch('http://127.0.0.1:8000/machines/', { headers: authHeaders() }).then(res => res.json()),
     ]).then(([plansData, machinesData]) => {
       setPlans(plansData)
       setMachines(machinesData)
@@ -39,7 +44,7 @@ export default function MaintenancePlansPage() {
     try {
       const response = await fetch('http://127.0.0.1:8000/maintenance-plans/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           machine_id: parseInt(form.machine_id),
           type: form.type,

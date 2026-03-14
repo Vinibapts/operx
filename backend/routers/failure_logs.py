@@ -2,9 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from models.failure_log import FailureLog
+from models.user import User
 import asyncio
 from services.email_service import send_alert_email
 from services.whatsapp_service import send_whatsapp_alert
+from auth_middleware import get_current_user
 
 router = APIRouter(
     prefix="/failure-logs",
@@ -12,19 +14,19 @@ router = APIRouter(
 )
 
 @router.get("/")
-def get_failure_logs(db: Session = Depends(get_db)):
+def get_failure_logs(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     logs = db.query(FailureLog).all()
     return logs
 
 @router.get("/{log_id}")
-def get_failure_log(log_id: int, db: Session = Depends(get_db)):
+def get_failure_log(log_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     log = db.query(FailureLog).filter(FailureLog.id == log_id).first()
     if not log:
         raise HTTPException(status_code=404, detail="Log não encontrado")
     return log
 
 @router.get("/machine/{machine_id}")
-def get_logs_by_machine(machine_id: int, db: Session = Depends(get_db)):
+def get_logs_by_machine(machine_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     logs = db.query(FailureLog).filter(FailureLog.machine_id == machine_id).all()
     return logs
 
@@ -34,7 +36,8 @@ def create_failure_log(
     description: str = None,
     downtime_hours: float = None,
     estimated_cost: float = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     log = FailureLog(
         machine_id=machine_id,
