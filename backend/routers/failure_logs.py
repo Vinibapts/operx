@@ -4,6 +4,7 @@ from database import get_db
 from models.failure_log import FailureLog
 import asyncio
 from services.email_service import send_alert_email
+from services.whatsapp_service import send_whatsapp_alert
 
 router = APIRouter(
     prefix="/failure-logs",
@@ -45,7 +46,6 @@ def create_failure_log(
     db.commit()
     db.refresh(log)
 
-    # Dispara email de alerta
     asyncio.run(send_alert_email(
         subject="⚠️ Falha registrada em máquina - Operx",
         body=f"""
@@ -56,6 +56,10 @@ def create_failure_log(
         <p><b>Tempo parado:</b> {log.downtime_hours or 0} horas</p>
         <p><b>Custo estimado:</b> R$ {log.estimated_cost or 0:.2f}</p>
         """
+    ))
+
+    asyncio.run(send_whatsapp_alert(
+        f"⚠️ Falha registrada!\nMáquina: {log.machine_id}\nDescrição: {log.description or 'Sem descrição'}\nTempo parado: {log.downtime_hours or 0}h\nCusto estimado: R$ {log.estimated_cost or 0:.2f}"
     ))
 
     return log

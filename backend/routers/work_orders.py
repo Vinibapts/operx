@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from typing import Optional
 import asyncio
 from services.email_service import send_alert_email
+from services.whatsapp_service import send_whatsapp_alert
 
 router = APIRouter(
     prefix="/work-orders",
@@ -43,7 +44,6 @@ def create_work_order(request: WorkOrderRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(work_order)
 
-    # Dispara email de alerta
     asyncio.run(send_alert_email(
         subject="🔧 Nova Ordem de Serviço criada - Operx",
         body=f"""
@@ -53,6 +53,10 @@ def create_work_order(request: WorkOrderRequest, db: Session = Depends(get_db)):
         <p><b>Descrição:</b> {work_order.description or 'Sem descrição'}</p>
         <p><b>Status:</b> {work_order.status}</p>
         """
+    ))
+
+    asyncio.run(send_whatsapp_alert(
+        f"🔧 Nova OS #{work_order.id}\nMáquina: {work_order.machine_id}\nDescrição: {work_order.description or 'Sem descrição'}"
     ))
 
     return work_order

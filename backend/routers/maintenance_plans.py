@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from typing import Optional
 import asyncio
 from services.email_service import send_alert_email
+from services.whatsapp_service import send_whatsapp_alert
 
 router = APIRouter(
     prefix="/maintenance-plans",
@@ -44,7 +45,6 @@ def create_maintenance_plan(request: MaintenancePlanRequest, db: Session = Depen
     db.commit()
     db.refresh(plan)
 
-    # Dispara email de alerta
     asyncio.run(send_alert_email(
         subject="📅 Novo Plano de Manutenção criado - Operx",
         body=f"""
@@ -55,6 +55,10 @@ def create_maintenance_plan(request: MaintenancePlanRequest, db: Session = Depen
         <p><b>Descrição:</b> {plan.description or 'Sem descrição'}</p>
         <p><b>Frequência:</b> A cada {plan.frequency_days} dias</p>
         """
+    ))
+
+    asyncio.run(send_whatsapp_alert(
+        f"📅 Novo Plano de Manutenção #{plan.id}\nMáquina: {plan.machine_id}\nTipo: {plan.type}\nFrequência: a cada {plan.frequency_days} dias"
     ))
 
     return plan
